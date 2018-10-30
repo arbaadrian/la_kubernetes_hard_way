@@ -1,7 +1,7 @@
 #!/bin/bash
 
-username = "aarba"
-ssh_pub_key = "public key"
+username="aarba"
+ssh_pub_key="public key"
 
 yum install -y vim python git gcc wget curl
 useradd $username

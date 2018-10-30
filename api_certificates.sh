@@ -1,7 +1,7 @@
 #!/bin/bash
 
-username = "aarba"
-ssh_prv_key = "------------BEGIN RSA--
+username="aarba"
+ssh_prv_key="------------BEGIN RSA--
 My
 Key
 ------------END RSA--"
@@ -53,7 +53,7 @@ cfssl gencert -initca ca-csr.json | cfssljson -bare ca
 
 # Install cfssl
 
-wget -q --show-progress --https-only --timestamping https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+wget -q https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
 chmod +x cfssl_linux-amd64 cfssljson_linux-amd64
 sudo mv cfssl_linux-amd64 /usr/local/bin/cfssl
 sudo mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
@@ -415,3 +415,24 @@ sudo scp kubernetes-worker-1.kubeconfig kube-proxy.kubeconfig $username@kubernet
 sudo scp kubernetes-worker-2.kubeconfig kube-proxy.kubeconfig $username@kubernetes-worker-2:~/
 sudo scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig $username@kubernetes-controller-1:~/
 sudo scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig $username@kubernetes-controller-2:~/
+
+# Generate kubernetes data encryption key
+
+ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+
+cat > encryption-config.yaml << EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
+
+scp encryption-config.yaml $username@kubernetes-controller-1:~/
+scp encryption-config.yaml $username@kubernetes-controller-2:~/
